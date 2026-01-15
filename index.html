@@ -1,0 +1,1301 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Emzirme Mitleri Koşusu</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+        
+        body {
+            font-family: 'Courier New', monospace;
+            overflow: hidden;
+            background: #000;
+            touch-action: none;
+        }
+        
+        #gameCanvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+            position: fixed;
+            top: 0;
+            left: 0;
+        }
+        
+        #ui {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 10;
+        }
+        
+        #score {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            font-size: 18px;
+            font-weight: bold;
+            color: #0ff;
+            text-shadow: 0 0 10px #0ff;
+            background: rgba(0,0,0,0.8);
+            padding: 10px 20px;
+            border-radius: 5px;
+            border: 2px solid #0ff;
+            box-shadow: 0 0 20px #0ff;
+        }
+        
+        #distance {
+            position: absolute;
+            top: 70px;
+            left: 20px;
+            font-size: 18px;
+            font-weight: bold;
+            color: #0f0;
+            text-shadow: 0 0 10px #0f0;
+            background: rgba(0,0,0,0.8);
+            padding: 10px 20px;
+            border-radius: 5px;
+            border: 2px solid #0f0;
+            box-shadow: 0 0 20px #0f0;
+        }
+        
+        #lives {
+            position: absolute;
+            top: 120px;
+            left: 20px;
+            font-size: 24px;
+            color: #f0f;
+            background: rgba(0,0,0,0.8);
+            padding: 10px 20px;
+            border-radius: 5px;
+            border: 2px solid #f0f;
+            box-shadow: 0 0 20px #f0f;
+        }
+        
+        #level {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            font-size: 20px;
+            color: #ff0;
+            font-weight: bold;
+            text-shadow: 0 0 10px #ff0;
+            background: rgba(0,0,0,0.8);
+            padding: 10px 20px;
+            border-radius: 5px;
+            border: 2px solid #ff0;
+            box-shadow: 0 0 20px #ff0;
+        }
+        
+        #menu, #gameOver, #levelComplete {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            background: linear-gradient(135deg, rgba(0,0,0,0.95), rgba(20,0,40,0.95));
+            pointer-events: auto;
+        }
+        
+        h1 {
+            font-size: 42px;
+            background: linear-gradient(45deg, #0ff, #f0f, #ff0);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 20px;
+            animation: glow 2s ease-in-out infinite;
+        }
+        
+        @keyframes glow {
+            0%, 100% { filter: brightness(1); }
+            50% { filter: brightness(1.5); }
+        }
+        
+        #menu p, #levelComplete p {
+            font-size: 16px;
+            color: #0ff;
+            margin-bottom: 20px;
+            text-align: center;
+            padding: 0 20px;
+            line-height: 1.8;
+            max-width: 600px;
+            text-shadow: 0 0 5px #0ff;
+        }
+        
+        #nicknameInput {
+            font-family: 'Courier New', monospace;
+            font-size: 24px;
+            padding: 15px 25px;
+            border: 3px solid #0ff;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            text-align: center;
+            outline: none;
+            width: 80%;
+            max-width: 300px;
+            background: rgba(0,0,0,0.8);
+            color: #0ff;
+            box-shadow: 0 0 20px #0ff;
+        }
+        
+        .btn {
+            font-family: 'Courier New', monospace;
+            font-size: 24px;
+            padding: 15px 40px;
+            background: linear-gradient(135deg, #0ff, #f0f);
+            color: #000;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            box-shadow: 0 0 30px rgba(0,255,255,0.5);
+            transition: all 0.3s;
+            margin: 10px;
+            pointer-events: auto;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+        
+        .btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 50px rgba(0,255,255,0.8);
+        }
+        
+        #quizOverlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.9);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            pointer-events: auto;
+        }
+        
+        #jokerOverlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.9);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            pointer-events: auto;
+        }
+        
+        #jokerCard {
+            background: linear-gradient(135deg, rgba(0,20,40,0.95), rgba(20,0,40,0.95));
+            padding: 30px;
+            border-radius: 10px;
+            max-width: 600px;
+            width: 90%;
+            box-shadow: 0 0 50px #f00;
+            border: 2px solid #f00;
+        }
+        
+        #jokerCard h2 {
+            background: linear-gradient(45deg, #f00, #ff0);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 20px;
+            font-size: 28px;
+            text-align: center;
+        }
+        
+        #jokerCard p {
+            font-size: 22px;
+            margin-bottom: 30px;
+            color: #f00;
+            line-height: 1.6;
+            text-shadow: 0 0 5px #f00;
+            text-align: center;
+        }
+        
+        #quizCard {
+            background: linear-gradient(135deg, rgba(0,20,40,0.95), rgba(20,0,40,0.95));
+            padding: 30px;
+            border-radius: 10px;
+            max-width: 600px;
+            width: 90%;
+            box-shadow: 0 0 50px #0ff;
+            border: 2px solid #0ff;
+        }
+        
+        #quizCard h2 {
+            background: linear-gradient(45deg, #0ff, #f0f);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 20px;
+            font-size: 28px;
+            text-align: center;
+        }
+        
+        #quizCard p {
+            font-size: 22px;
+            margin-bottom: 30px;
+            color: #0ff;
+            line-height: 1.6;
+            text-shadow: 0 0 5px #0ff;
+            text-align: center;
+        }
+        
+        .quiz-buttons {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+        }
+        
+        .quiz-btn {
+            flex: 1;
+            font-family: 'Courier New', monospace;
+            font-size: 22px;
+            padding: 20px;
+            border: 2px solid;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+        
+        .quiz-btn.true {
+            background: rgba(0,255,0,0.2);
+            color: #0f0;
+            border-color: #0f0;
+            box-shadow: 0 0 20px #0f0;
+        }
+        
+        .quiz-btn.false {
+            background: rgba(255,0,255,0.2);
+            color: #f0f;
+            border-color: #f0f;
+            box-shadow: 0 0 20px #f0f;
+        }
+        
+        .quiz-btn:hover {
+            transform: scale(1.05);
+        }
+        
+        #feedback {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: linear-gradient(135deg, rgba(0,20,40,0.95), rgba(20,0,40,0.95));
+            padding: 30px;
+            border-radius: 10px;
+            display: none;
+            text-align: center;
+            box-shadow: 0 0 50px #0ff;
+            border: 2px solid #0ff;
+            max-width: 500px;
+            width: 90%;
+            pointer-events: auto;
+        }
+        
+        #feedback h3 {
+            font-size: 32px;
+            margin-bottom: 15px;
+        }
+        
+        #feedback p {
+            font-size: 20px;
+            margin-bottom: 20px;
+            color: #0ff;
+            text-shadow: 0 0 5px #0ff;
+            line-height: 1.6;
+        }
+        
+        #leaderboard {
+            background: linear-gradient(135deg, rgba(0,20,40,0.95), rgba(20,0,40,0.95));
+            padding: 20px;
+            border-radius: 10px;
+            border: 2px solid #0ff;
+            box-shadow: 0 0 30px #0ff;
+            max-width: 400px;
+            width: 90%;
+            max-height: 400px;
+            overflow-y: auto;
+            margin-top: 20px;
+        }
+        
+        #leaderboard h3 {
+            background: linear-gradient(45deg, #0ff, #f0f);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 15px;
+        }
+        
+        .leaderboard-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px;
+            border-bottom: 1px solid rgba(0,255,255,0.3);
+            font-size: 16px;
+            border-radius: 5px;
+            margin-bottom: 5px;
+            color: #0ff;
+        }
+        
+        #audioToggle {
+            position: absolute;
+            top: 180px;
+            left: 20px;
+            font-size: 32px;
+            cursor: pointer;
+            pointer-events: auto;
+            background: rgba(0,0,0,0.8);
+            padding: 10px;
+            border-radius: 5px;
+            border: 2px solid #0ff;
+            box-shadow: 0 0 20px #0ff;
+        }
+        
+        @media (max-width: 600px) {
+            h1 { font-size: 32px; }
+            #quizCard p { font-size: 18px; }
+        }
+    </style>
+</head>
+<body>
+    <canvas id="gameCanvas"></canvas>
+    
+    <div id="ui">
+        <div id="score">SKOR: 0 | SORU: 0/10</div>
+        <div id="distance">MESAFE: 0m</div>
+        <div id="lives">CAN: ❤️❤️❤️</div>
+        <div id="level">LEVEL 1</div>
+        <div id="audioToggle">🔊</div>
+        
+        <div id="menu">
+            <h1>🍼 EMZİRME MİTLERİ KOŞUSU</h1>
+            <p style="font-size: 18px; line-height: 1.8;">
+                <strong>4 SEVİYELİ EĞİTİM OYUNU</strong><br><br>
+                🏃‍♀️ Koşarak engelleri aş<br>
+                🍼 Emzirme mitlerini öğren<br>
+                ❤️ 3 canlı sistem + Joker sorusu<br>
+                📚 Her level 10 soru - hepsini doğru bil!<br>
+                🏆 4 level tamamla, uzman ol!<br><br>
+                <em>Her 1000m'de yeni soru! 💕</em>
+            </p>
+            <input type="text" id="nicknameInput" placeholder="RUMUZ GİR" maxlength="15">
+            <button class="btn" id="startBtn">▶ BAŞLAT</button>
+        </div>
+        
+        <div id="levelComplete" style="display: none;">
+            <h1>✨ LEVEL TAMAMLANDI!</h1>
+            <p id="levelCompleteText"></p>
+            <button class="btn" id="nextLevelBtn">➡ SONRAKİ LEVEL</button>
+        </div>
+        
+        <div id="gameOver" style="display: none;">
+            <h1>OYUN BİTTİ</h1>
+            <p id="finalScore" style="color: #0ff; font-size: 24px;"></p>
+            <div id="leaderboard">
+                <h3>🏆 LIDERLIK TABLOSU</h3>
+                <div id="leaderboardList"></div>
+            </div>
+            <button class="btn" id="restartBtn">↻ TEKRAR OYNA</button>
+        </div>
+        
+        <div id="quizOverlay">
+            <div id="quizCard">
+                <h2>🍼 EMZİRME MİTİ</h2>
+                <p id="quizQuestion"></p>
+                <p style="font-size: 20px; color: #ff0; margin-bottom: 20px;">Bu ifade DOĞRU mu YANLIŞ mı?</p>
+                <div class="quiz-buttons">
+                    <button class="quiz-btn true" id="trueBtn">✅ DOĞRU</button>
+                    <button class="quiz-btn false" id="falseBtn">❌ YANLIŞ</button>
+                </div>
+            </div>
+        </div>
+        
+        <div id="feedback">
+            <h3 id="feedbackTitle"></h3>
+            <p id="feedbackText"></p>
+            <button class="btn" id="continueBtn">DEVAM ET</button>
+        </div>
+        
+        <div id="jokerOverlay">
+            <div id="jokerCard">
+                <h2>⚡ JOKER SORU!</h2>
+                <p id="jokerMessage">Canlarınız bitti! 💔 Ama bir şansınız daha var! Bu soruyu doğru bilirseniz oyuna devam edebilirsiniz! 🍼</p>
+                <p id="jokerQuestion" style="font-size: 24px; color: #0ff; margin: 20px 0;"></p>
+                <p style="font-size: 20px; color: #ff0; margin-bottom: 20px;">Bu ifade DOĞRU mu YANLIŞ mı?</p>
+                <div class="quiz-buttons">
+                    <button class="quiz-btn true" id="jokerTrueBtn">✅ DOĞRU</button>
+                    <button class="quiz-btn false" id="jokerFalseBtn">❌ YANLIŞ</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script>
+        // Level 1 Soruları
+        const level1Questions = [
+            { q: "Bebeğin her ağlaması aç olduğu anlamına gelir.", a: false, ex: "Bebekler altı kirli olduğu, kucak istediği veya yorulduğu için de ağlar." },
+            { q: "Bebeğin dişleri çıktığında emzirme sonlandırılmalıdır.", a: false, ex: "Diş çıkarma emzirmeye engel değildir." },
+            { q: "Her emzirmeden önce meme başını yıkamaya gerek yoktur.", a: true, ex: "Meme başını her emzirmeden önce yıkamaya gerek yoktur, doğal koruma sağlar." },
+            { q: "Bebek ishal olursa emzirme kesilmelidir.", a: false, ex: "Bebekler her daim emzirilmelidir, bu sayede hastalıkları daha kolay atlatır." },
+            { q: "Sütün yeterli olup olmadığı sağılarak anlaşılabilir.", a: false, ex: "Sağdığımızda çıkan süt miktarının az ya da çok olması yeterliliği göstermez." },
+            { q: "Sütü arttırmak için ekstra şekerli, tatlı yiyecekler yemeye gerek yoktur.", a: true, ex: "Dengeli beslenme yeterlidir, şekerli yiyecekler gerekli değildir." },
+            { q: "İlk 6 ay anne sütü dışında bebeğe kesinlikle su bile verilmemelidir.", a: true, ex: "İlk 6 ay sadece anne sütü yeterlidir, su bile gerekmez." },
+            { q: "Zayıf annelerin (kilosu az) süt üretimi daha az olabilir.", a: false, ex: "Süt üretiminin annenin kilosu ile hiçbir ilgisi yoktur." },
+            { q: "Bebek doğar doğmaz annenin vücudu bebeği doyuracak sütü üretir.", a: true, ex: "Anne vücudu doğumdan hemen sonra bebek için süt üretmeye hazırdır." },
+            { q: "Anne sütü ile beslenen bebekler mama ile beslenen bebeklerden daha sağlıklıdır.", a: true, ex: "Anne sütü bebeğin ihtiyaçlarına tam uygun ve en sağlıklı besindir." }
+        ];
+
+        // Level 2 Soruları
+        const level2Questions = [
+            { q: "İlk 6 ay sadece anne sütü ile beslenen bebekler yeterince kilo alamaz.", a: false, ex: "Sadece anne sütü alıyor diye bebeğe mama vermek doğru olmaz." },
+            { q: "Annelerin sütü bazı zamanlarda azalabilir, artabilir, kesilebilir ve geri gelebilir.", a: true, ex: "Süt üretimi dinamiktir ve değişkenlik gösterebilir." },
+            { q: "Sezaryen doğum yapan annelerde doğumdan hemen sonra süt gelir ve bebeğini emzirebilir.", a: true, ex: "Sezaryen doğum emzirmeye engel değildir." },
+            { q: "Küçük meme yapısı var ise süt salgılanması daha azdır.", a: false, ex: "Memenin boyutu ile süt miktarı arasında bir ilişki bulunmamaktadır." },
+            { q: "Doğumdan sonraki ilk süt (ağız sütü) altın değerinde olup mutlaka bebeğe içirilmelidir.", a: true, ex: "İlk süt (kolostrum) bebeğin bağışıklık sistemi için çok önemlidir." },
+            { q: "Meme silikonu yaptıran kadınlar kesinlikle emziremez.", a: false, ex: "Yapılan operasyon süt kanallarını ve süt bezlerini etkilemez." },
+            { q: "Bebekler ek gıdaya geçtikten sonra emzirmeye gerek yoktur.", a: false, ex: "Ek gıda ile birlikte emzirme devam etmelidir." },
+            { q: "Emzirme bizi gebelikten kesin korur.", a: false, ex: "Prolaktin hormonu doğurganlığı kısmen azaltır fakat güvenilir bir koruma sağlamaz." },
+            { q: "Bebek erken de doğsa emme refleksi genellikle vardır.", a: true, ex: "Emme refleksi doğuştan gelen bir reflekstir." },
+            { q: "Bebek sürekli ağlıyorsa anne sütü yetmiyor demektir.", a: false, ex: "Bebekler bazen gaz sancısı, temas ihtiyacı, uyku için ağlar." }
+        ];
+
+        // Level 3 Soruları
+        const level3Questions = [
+            { q: "Bebeğe bir kere mama verdiysen bir daha emmez.", a: false, ex: "Bazen emen bebekleri mama ile desteklemek gerekebilir." },
+            { q: "Annenin çalışması emzirmesine engel değildir.", a: true, ex: "Çalışan anneler süt sağarak bebeklerini beslemeye devam edebilir." },
+            { q: "Bazı annelerin sütü bebeklerine zarar verir, yaramaz.", a: false, ex: "Anne sütü bebeğine özel ve bebeğin ihtiyaçları doğrultusunda üretilir." },
+            { q: "Anne hasta ise (grip vb) iyileşene kadar bebeğini emzirmemelidir.", a: false, ex: "Anne bu durumda bile bebeğini emzirerek bebeğini hastalıklara karşı korur." },
+            { q: "Anne sütünün rengi (daha sarı kıvamlı olması) daha kaliteli olduğu anlamına gelmez.", a: true, ex: "Süt rengi kaliteyi göstermez, bebeğin ihtiyacına göre değişir." },
+            { q: "Annenin meme başı içe çökük ise emziremez.", a: false, ex: "Uygun masaj teknikleri ile veya meme ucu başlığı ile emzirebilir." },
+            { q: "Emzirirken gebe kaldığında anne emzirmeye devam edebilir.", a: true, ex: "Gebelik sırasında emzirmeye devam etmek güvenlidir." },
+            { q: "Meme başı küçük olan anneler emziremez.", a: false, ex: "Bebek emdikçe meme ucu da uyum sağlayarak emzirme kolaylaşır." },
+            { q: "3 aylık bir bebeğe yiyeceklerin tadına baktırmaya başlanmamalıdır.", a: true, ex: "Ek gıdaya 6. aydan önce başlanmamalıdır." },
+            { q: "Emziren anneler çoğu ilacı kullanamaz.", a: true, ex: "Emzirme döneminde ilaç kullanımında doktor kontrolü şarttır." }
+        ];
+
+        let scene, camera, renderer;
+        let player, ground, obstacles = [], buildings = [];
+        let gameState = 'menu';
+        let score = 0, distance = 0, speed = 0.15;
+        let currentLane = 0;
+        let isJumping = false, jumpVelocity = 0;
+        let touchStartX = 0, touchStartY = 0;
+        let lastQuizDistance = 0;
+        let currentQuiz = null;
+        let nickname = '';
+        let obstacleSpawnRate = 40;
+        let lives = 3;
+        let recentObstacleLanes = [];
+        let lights = [];
+        let audioContext, audioEnabled = true, musicOscillators = [];
+        let currentLevel = 1;
+        let levelQuestionIndex = 0;
+        let currentLevelQuestions = [];
+        let wrongAnswers = [];
+        let usedJoker = false;
+        let jokerQuestion = null;
+        
+        const QUIZ_INTERVAL = 1000;
+        
+        function loadWrongAnswers() {
+            try {
+                const saved = localStorage.getItem('wrongAnswers');
+                if (saved) {
+                    wrongAnswers = JSON.parse(saved);
+                }
+            } catch (e) {}
+        }
+        
+        function saveWrongAnswers() {
+            try {
+                localStorage.setItem('wrongAnswers', JSON.stringify(wrongAnswers));
+            } catch (e) {}
+        }
+        
+        function getLevelQuestions(level) {
+            if (level === 1) return [...level1Questions];
+            if (level === 2) return [...level2Questions];
+            if (level === 3) return [...level3Questions];
+            if (level === 4) return [...level1Questions, ...level2Questions, ...level3Questions];
+            return [];
+        }
+        
+        function getNextQuestion() {
+            // %50 ihtimalle yanlış yapılan sorudan sor
+            if (wrongAnswers.length > 0 && Math.random() < 0.5) {
+                const wrongQ = wrongAnswers[Math.floor(Math.random() * wrongAnswers.length)];
+                // Bu leveldeki sorulardan mı kontrol et
+                const inCurrentLevel = currentLevelQuestions.find(q => q.q === wrongQ.q);
+                if (inCurrentLevel && levelQuestionIndex < currentLevelQuestions.length) {
+                    return wrongQ;
+                }
+            }
+            
+            if (levelQuestionIndex >= currentLevelQuestions.length) {
+                return null;
+            }
+            
+            return currentLevelQuestions[levelQuestionIndex];
+        }
+        
+        function initAudio() {
+            audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            startGameMusic();
+        }
+        
+        function startGameMusic() {
+            if (!audioContext || !audioEnabled) return;
+            
+            // Oyun müziği - energetic 8-bit tarzı
+            const melody = [
+                { note: 523.25, duration: 0.2 },  // C5
+                { note: 659.25, duration: 0.2 },  // E5
+                { note: 783.99, duration: 0.2 },  // G5
+                { note: 659.25, duration: 0.2 },  // E5
+                { note: 523.25, duration: 0.4 },  // C5
+                { note: 587.33, duration: 0.2 },  // D5
+                { note: 659.25, duration: 0.2 },  // E5
+                { note: 587.33, duration: 0.4 }   // D5
+            ];
+            
+            let index = 0;
+            
+            function playMelodyNote() {
+                if (!audioEnabled) return;
+                
+                const note = melody[index];
+                const osc = audioContext.createOscillator();
+                const gain = audioContext.createGain();
+                
+                osc.type = 'square';
+                osc.frequency.value = note.note;
+                
+                osc.connect(gain);
+                gain.connect(audioContext.destination);
+                
+                const time = audioContext.currentTime;
+                gain.gain.setValueAtTime(0.08, time);
+                gain.gain.exponentialRampToValueAtTime(0.01, time + note.duration);
+                
+                osc.start(time);
+                osc.stop(time + note.duration);
+                
+                index = (index + 1) % melody.length;
+                setTimeout(playMelodyNote, note.duration * 1000);
+            }
+            
+            playMelodyNote();
+            
+            // Bass line
+            function playBass() {
+                if (!audioEnabled) return;
+                
+                const osc = audioContext.createOscillator();
+                const gain = audioContext.createGain();
+                
+                osc.type = 'sawtooth';
+                osc.frequency.value = 130.81; // C3
+                
+                osc.connect(gain);
+                gain.connect(audioContext.destination);
+                
+                const time = audioContext.currentTime;
+                gain.gain.setValueAtTime(0.05, time);
+                gain.gain.exponentialRampToValueAtTime(0.01, time + 0.4);
+                
+                osc.start(time);
+                osc.stop(time + 0.4);
+                
+                setTimeout(playBass, 400);
+            }
+            
+            playBass();
+        }
+        
+        function playSound(type) {
+            if (!audioContext || !audioEnabled) return;
+            
+            const osc = audioContext.createOscillator();
+            const gain = audioContext.createGain();
+            osc.connect(gain);
+            gain.connect(audioContext.destination);
+            
+            const now = audioContext.currentTime;
+            
+            if (type === 'jump') {
+                osc.type = 'square';
+                osc.frequency.value = 400;
+                gain.gain.setValueAtTime(0.3, now);
+                gain.gain.exponentialRampToValueAtTime(0.01, now + 0.1);
+                osc.start(now);
+                osc.stop(now + 0.1);
+            } else if (type === 'correct') {
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(600, now);
+                osc.frequency.exponentialRampToValueAtTime(1200, now + 0.2);
+                gain.gain.setValueAtTime(0.2, now);
+                gain.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
+                osc.start(now);
+                osc.stop(now + 0.3);
+            } else if (type === 'wrong') {
+                osc.type = 'sawtooth';
+                osc.frequency.value = 150;
+                gain.gain.setValueAtTime(0.2, now);
+                gain.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
+                osc.start(now);
+                osc.stop(now + 0.3);
+            }
+        }
+        
+        function initThree() {
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0x000510);
+            scene.fog = new THREE.Fog(0x000510, 10, 50);
+            
+            camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+            camera.position.set(0, 3, 5);
+            camera.lookAt(0, 1, 0);
+            
+            renderer = new THREE.WebGLRenderer({ canvas: document.getElementById('gameCanvas'), antialias: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            
+            const ambientLight = new THREE.AmbientLight(0x404040, 0.3);
+            scene.add(ambientLight);
+            
+            const colors = [0x00ffff, 0xff00ff, 0x00ff00, 0xffff00];
+            for (let i = 0; i < 4; i++) {
+                const light = new THREE.PointLight(colors[i], 2, 20);
+                light.position.set((i % 2 === 0 ? -6 : 6), 3, -i * 10);
+                scene.add(light);
+                lights.push({ light, offset: i * Math.PI / 2 });
+            }
+            
+            const groundGeometry = new THREE.PlaneGeometry(8, 100);
+            const groundMaterial = new THREE.MeshBasicMaterial({ 
+                color: 0x001020,
+                transparent: true,
+                opacity: 0.8
+            });
+            ground = new THREE.Mesh(groundGeometry, groundMaterial);
+            ground.rotation.x = -Math.PI / 2;
+            scene.add(ground);
+            
+            for (let i = 0; i < 100; i++) {
+                const lineGeom = new THREE.BoxGeometry(0.05, 0.02, 1);
+                const lineMat = new THREE.MeshBasicMaterial({ color: 0x00ffff });
+                const line = new THREE.Mesh(lineGeom, lineMat);
+                line.position.set(-2, 0.01, -i);
+                scene.add(line);
+                
+                const line2 = line.clone();
+                line2.position.set(2, 0.01, -i);
+                scene.add(line2);
+            }
+            
+            createBuilding('EMZİRME 🍼', -7, -10, 0xff00ff);
+            createBuilding('ANNE BEBEK 👶', 7, -25, 0x00ffff);
+            createBuilding('SÜT BANKASI 💕', -7, -40, 0xff0080);
+            
+            createPlayer();
+            
+            window.addEventListener('resize', () => {
+                camera.aspect = window.innerWidth / window.innerHeight;
+                camera.updateProjectionMatrix();
+                renderer.setSize(window.innerWidth, window.innerHeight);
+            });
+        }
+        
+        function createBuilding(text, x, z, color) {
+            const group = new THREE.Group();
+            
+            const buildingGeom = new THREE.BoxGeometry(3, 4, 2.5);
+            const buildingMat = new THREE.MeshLambertMaterial({ 
+                color: 0x001020,
+                emissive: color,
+                emissiveIntensity: 0.2
+            });
+            const building = new THREE.Mesh(buildingGeom, buildingMat);
+            building.position.y = 2;
+            group.add(building);
+            
+            const canvas = document.createElement('canvas');
+            const context = canvas.getContext('2d');
+            canvas.width = 512;
+            canvas.height = 128;
+            
+            context.fillStyle = '#000';
+            context.fillRect(0, 0, canvas.width, canvas.height);
+            context.font = 'bold 40px Arial';
+            context.fillStyle = `#${color.toString(16).padStart(6, '0')}`;
+            context.shadowColor = context.fillStyle;
+            context.shadowBlur = 20;
+            context.textAlign = 'center';
+            context.fillText(text, 256, 64);
+            
+            const texture = new THREE.CanvasTexture(canvas);
+            const signGeom = new THREE.PlaneGeometry(2.5, 0.6);
+            const signMat = new THREE.MeshBasicMaterial({ map: texture, transparent: true });
+            const sign = new THREE.Mesh(signGeom, signMat);
+            sign.position.set(0, 4.5, 1.3);
+            group.add(sign);
+            
+            group.position.set(x, 0, z);
+            group.userData = { side: x < 0 ? 'left' : 'right', color };
+            scene.add(group);
+            buildings.push(group);
+        }
+        
+        function createPlayer() {
+            const group = new THREE.Group();
+            
+            const dressGeom = new THREE.CylinderGeometry(0.5, 0.35, 0.9, 16);
+            const dressMat = new THREE.MeshLambertMaterial({ 
+                color: 0xff00ff,
+                emissive: 0xff00ff,
+                emissiveIntensity: 0.3
+            });
+            const dress = new THREE.Mesh(dressGeom, dressMat);
+            dress.position.y = 1.3;
+            group.add(dress);
+            
+            const bellyGeom = new THREE.SphereGeometry(0.6, 20, 20);
+            const bellyMat = new THREE.MeshLambertMaterial({ 
+                color: 0x00ffff,
+                emissive: 0x00ffff,
+                emissiveIntensity: 0.5
+            });
+            const belly = new THREE.Mesh(bellyGeom, bellyMat);
+            belly.position.set(0, 1.75, 0.25);
+            belly.scale.set(1, 0.95, 1.1);
+            group.add(belly);
+            
+            const skinMat = new THREE.MeshLambertMaterial({ color: 0xffcc99 });
+            
+            const legGeom = new THREE.CylinderGeometry(0.12, 0.1, 1, 12);
+            const leftLeg = new THREE.Mesh(legGeom, skinMat);
+            leftLeg.position.set(-0.15, 0.5, 0);
+            group.add(leftLeg);
+            
+            const rightLeg = leftLeg.clone();
+            rightLeg.position.x = 0.15;
+            group.add(rightLeg);
+            
+            const headGeom = new THREE.SphereGeometry(0.35, 20, 20);
+            const head = new THREE.Mesh(headGeom, skinMat);
+            head.position.y = 2.8;
+            group.add(head);
+            
+            const hairGeom = new THREE.SphereGeometry(0.37, 20, 20);
+            const hairMat = new THREE.MeshLambertMaterial({ 
+                color: 0x00ffff,
+                emissive: 0x00ffff,
+                emissiveIntensity: 0.3
+            });
+            const hair = new THREE.Mesh(hairGeom, hairMat);
+            hair.position.set(0, 2.95, -0.05);
+            group.add(hair);
+            
+            const eyeGeom = new THREE.SphereGeometry(0.06, 8, 8);
+            const eyeMat = new THREE.MeshBasicMaterial({ color: 0x00ffff });
+            
+            const leftEye = new THREE.Mesh(eyeGeom, eyeMat);
+            leftEye.position.set(-0.12, 2.85, 0.3);
+            group.add(leftEye);
+            
+            const rightEye = leftEye.clone();
+            rightEye.position.x = 0.12;
+            group.add(rightEye);
+            
+            player = group;
+            player.position.set(0, 0, 2);
+            player.rotation.y = Math.PI + Math.PI / 4;
+            player.scale.set(0.6, 0.6, 0.6);
+            scene.add(player);
+        }
+        
+        function createObstacle(lane) {
+            const colors = [0x00ffff, 0xff00ff, 0x00ff00, 0xffff00];
+            const color = colors[Math.floor(Math.random() * colors.length)];
+            
+            const coneGeom = new THREE.ConeGeometry(0.3, 1, 8);
+            const coneMat = new THREE.MeshLambertMaterial({ 
+                color: color,
+                emissive: color,
+                emissiveIntensity: 0.5
+            });
+            const obstacle = new THREE.Mesh(coneGeom, coneMat);
+            obstacle.position.y = 0.5;
+            obstacle.position.x = lane * 2;
+            obstacle.position.z = -20;
+            obstacle.scale.set(1.3, 1.3, 1.3);
+            obstacle.userData = { lane };
+            scene.add(obstacle);
+            obstacles.push(obstacle);
+            
+            recentObstacleLanes.push(lane);
+            if (recentObstacleLanes.length > 3) {
+                recentObstacleLanes.shift();
+            }
+        }
+        
+        function updateScore() {
+            const totalQuestions = currentLevel === 4 ? 30 : 10;
+            document.getElementById('score').textContent = `SKOR: ${score} | SORU: ${levelQuestionIndex}/${totalQuestions}`;
+            document.getElementById('distance').textContent = `MESAFE: ${Math.floor(distance)}m`;
+        }
+        
+        function update() {
+            if (gameState !== 'playing') return;
+            
+            distance += speed * 10;
+            score += Math.floor(speed * 2);
+            updateScore();
+            
+            if (distance % 500 < speed * 10) {
+                speed += 0.003;
+                obstacleSpawnRate = Math.max(25, obstacleSpawnRate - 1);
+            }
+            
+            const targetX = currentLane * 2;
+            player.position.x += (targetX - player.position.x) * 0.15;
+            
+            if (isJumping) {
+                player.position.y += jumpVelocity;
+                jumpVelocity -= 0.02;
+                
+                if (player.position.y <= 0) {
+                    player.position.y = 0;
+                    isJumping = false;
+                    jumpVelocity = 0;
+                }
+            }
+            
+            player.rotation.y = Math.PI + Math.PI / 4 + Math.sin(Date.now() * 0.005) * 0.05;
+            
+            lights.forEach(({ light, offset }) => {
+                light.intensity = 2 + Math.sin(Date.now() * 0.003 + offset) * 0.5;
+            });
+            
+            const currentSpawnRate = distance < 150 ? obstacleSpawnRate * 2 : obstacleSpawnRate;
+            
+            if (Math.random() < 1 / currentSpawnRate && (obstacles.length === 0 || obstacles[obstacles.length - 1].position.z > -15)) {
+                const allLanes = [-1, 0, 1];
+                const availableLanes = allLanes.filter(lane => {
+                    const recentCount = recentObstacleLanes.filter(l => l === lane).length;
+                    return recentCount < 2;
+                });
+                
+                if (availableLanes.length > 1) {
+                    const lane = availableLanes[Math.floor(Math.random() * availableLanes.length)];
+                    createObstacle(lane);
+                }
+            }
+            
+            for (let i = obstacles.length - 1; i >= 0; i--) {
+                obstacles[i].position.z += speed;
+                obstacles[i].rotation.y += 0.05;
+                
+                if (!isJumping && obstacles[i].position.z > 1.5 && obstacles[i].position.z < 2.5) {
+                    if (Math.abs(obstacles[i].userData.lane - currentLane) < 0.5) {
+                        lives--;
+                        updateLives();
+                        playSound('wrong');
+                        
+                        scene.remove(obstacles[i]);
+                        obstacles.splice(i, 1);
+                        
+                        if (lives <= 0) {
+                            if (!usedJoker) {
+                                showJokerQuestion();
+                            } else {
+                                endGame();
+                            }
+                        }
+                        continue;
+                    }
+                }
+                
+                if (obstacles[i].position.z > 5) {
+                    scene.remove(obstacles[i]);
+                    obstacles.splice(i, 1);
+                }
+            }
+            
+            for (let i = buildings.length - 1; i >= 0; i--) {
+                buildings[i].position.z += speed;
+                
+                if (buildings[i].position.z > 10) {
+                    const oldBuilding = buildings[i];
+                    scene.remove(oldBuilding);
+                    buildings.splice(i, 1);
+                    
+                    const texts = [
+                        { t: 'EMZİRME 🍼', c: 0xff00ff },
+                        { t: 'ANNE BEBEK 👶', c: 0x00ffff },
+                        { t: 'SÜT BANKASI 💕', c: 0xff0080 }
+                    ];
+                    const random = texts[Math.floor(Math.random() * texts.length)];
+                    const side = oldBuilding.userData.side === 'left' ? 7 : -7;
+                    createBuilding(random.t, side, -100, random.c);
+                }
+            }
+            
+            if (distance - lastQuizDistance >= QUIZ_INTERVAL) {
+                const nextQ = getNextQuestion();
+                if (nextQ) {
+                    lastQuizDistance = distance;
+                    showQuiz();
+                } else {
+                    // Level tamamlandı
+                    levelComplete();
+                }
+            }
+            
+            camera.position.z = player.position.z + 5;
+        }
+        
+        function moveLane(direction) {
+            if (gameState !== 'playing') return;
+            currentLane = Math.max(-1, Math.min(1, currentLane + direction));
+        }
+        
+        function jump() {
+            if (gameState !== 'playing' || isJumping) return;
+            isJumping = true;
+            jumpVelocity = 0.25;
+            playSound('jump');
+        }
+        
+        function updateLives() {
+            const hearts = ['❤️', '❤️', '❤️'];
+            document.getElementById('lives').textContent = 'CAN: ' + hearts.slice(0, lives).join('');
+        }
+        
+        function showQuiz() {
+            gameState = 'quiz';
+            currentQuiz = getNextQuestion();
+            
+            if (!currentQuiz) {
+                levelComplete();
+                return;
+            }
+            
+            document.getElementById('quizQuestion').textContent = currentQuiz.q;
+            document.getElementById('quizOverlay').style.display = 'flex';
+        }
+        
+        function showJokerQuestion() {
+            gameState = 'joker';
+            usedJoker = true;
+            
+            // Rastgele bir soru seç
+            const allQuestions = [...level1Questions, ...level2Questions, ...level3Questions];
+            jokerQuestion = allQuestions[Math.floor(Math.random() * allQuestions.length)];
+            
+            document.getElementById('jokerQuestion').textContent = jokerQuestion.q;
+            document.getElementById('jokerOverlay').style.display = 'flex';
+        }
+        
+        function answerJokerQuestion(answer) {
+            document.getElementById('jokerOverlay').style.display = 'none';
+            
+            const correct = answer === jokerQuestion.a;
+            const feedbackTitle = document.getElementById('feedbackTitle');
+            const feedbackText = document.getElementById('feedbackText');
+            const feedback = document.getElementById('feedback');
+            
+            if (correct) {
+                playSound('correct');
+                feedbackTitle.textContent = '🎉 KURTULDU!';
+                feedbackTitle.style.color = '#0f0';
+                feedbackTitle.style.textShadow = '0 0 20px #0f0';
+                feedbackText.textContent = '💪 Joker soruyu bildin! Canların yenilendi, oyun devam ediyor!\n\n' + jokerQuestion.ex;
+                lives = 3;
+                updateLives();
+                score += 200;
+            } else {
+                playSound('wrong');
+                feedbackTitle.textContent = '💔 OYUN BİTTİ';
+                feedbackTitle.style.color = '#f00';
+                feedbackTitle.style.textShadow = '0 0 20px #f00';
+                feedbackText.textContent = '😢 Joker soruyu yanlış bildin!\n\nDoğru cevap: ' + (jokerQuestion.a ? 'DOĞRU' : 'YANLIŞ') + '\n\n' + jokerQuestion.ex;
+                
+                setTimeout(() => {
+                    feedback.style.display = 'none';
+                    endGame();
+                }, 4000);
+                feedback.style.display = 'block';
+                return;
+            }
+            
+            feedback.style.display = 'block';
+        }
+        
+        function answerQuiz(answer) {
+            document.getElementById('quizOverlay').style.display = 'none';
+            
+            const correct = answer === currentQuiz.a;
+            const feedbackTitle = document.getElementById('feedbackTitle');
+            const feedbackText = document.getElementById('feedbackText');
+            const feedback = document.getElementById('feedback');
+            
+            if (correct) {
+                playSound('correct');
+                const positives = ['✨ HAARİKASIN!', '💫 DOĞRU BİLDİN!', '🌟 TEBRİKLER!', '💕 BU DA MI DOĞRU!', '🎉 SÜPERSIN!'];
+                feedbackTitle.textContent = positives[Math.floor(Math.random() * positives.length)];
+                feedbackTitle.style.color = '#0f0';
+                feedbackTitle.style.textShadow = '0 0 20px #0f0';
+                feedbackText.textContent = currentQuiz.ex;
+                score += 100;
+                
+                wrongAnswers = wrongAnswers.filter(q => q.q !== currentQuiz.q);
+                saveWrongAnswers();
+            } else {
+                playSound('wrong');
+                feedbackTitle.textContent = '❌ YANLIŞ!';
+                feedbackTitle.style.color = '#f00';
+                feedbackTitle.style.textShadow = '0 0 20px #f00';
+                feedbackText.textContent = '📚 DOĞRUSU: ' + currentQuiz.ex;
+                
+                speed = Math.max(0.1, speed - 0.03);
+                
+                if (!wrongAnswers.find(q => q.q === currentQuiz.q)) {
+                    wrongAnswers.push(currentQuiz);
+                    saveWrongAnswers();
+                }
+            }
+            
+            levelQuestionIndex++;
+            updateScore();
+            feedback.style.display = 'block';
+        }
+        
+        function continueGame() {
+            document.getElementById('feedback').style.display = 'none';
+            if (gameState === 'joker' || gameState === 'quiz') {
+                gameState = 'playing';
+            }
+        }
+        
+        function levelComplete() {
+            gameState = 'levelComplete';
+            
+            if (currentLevel === 4) {
+                // Oyun tamamen bitti
+                endGame();
+                return;
+            }
+            
+            const messages = [
+                `🎉 LEVEL ${currentLevel} TAMAMLANDI!\n\nTüm soruları cevapladınız! ${currentLevel === 1 ? 'Temel' : currentLevel === 2 ? 'Orta seviye' : 'İleri seviye'} bilgileri öğrendiniz.\n\nSkor: ${score}`,
+                `✨ LEVEL ${currentLevel} BİTTİ!\n\nHarika! Tüm soruları doğru cevapladınız. Sonraki seviyeye hazır mısınız?\n\nSkor: ${score}`,
+                `💫 TEBRİKLER!\n\nLevel ${currentLevel}'deki ${levelQuestionIndex} soruyu tamamladınız!\n\nSkor: ${score}`
+            ];
+            document.getElementById('levelCompleteText').textContent = messages[Math.floor(Math.random() * messages.length)];
+            document.getElementById('levelComplete').style.display = 'flex';
+        }
+        
+        function nextLevel() {
+            document.getElementById('levelComplete').style.display = 'none';
+            currentLevel++;
+            levelQuestionIndex = 0;
+            lastQuizDistance = 0;
+            currentLevelQuestions = getLevelQuestions(currentLevel);
+            
+            // Level atladıkça hız artışı
+            speed += 0.05;
+            
+            document.getElementById('level').textContent = `LEVEL ${currentLevel}`;
+            updateScore();
+            gameState = 'playing';
+        }
+        
+        async function endGame() {
+            gameState = 'gameover';
+            
+            let completionMessage = '';
+            if (currentLevel === 4) {
+                completionMessage = '🏆 TEBRİKLER! TÜM SEVİYELERİ TAMAMLADINIZ!\nEmzirme konusunda UZMAN oldunuz! 🍼\n\n';
+            }
+            
+            document.getElementById('finalScore').textContent = completionMessage + `LEVEL: ${currentLevel}\nSKOR: ${score}\nMESAFE: ${Math.floor(distance)}m`;
+            
+            try {
+                await window.storage.set(`score_${nickname}_${Date.now()}`, JSON.stringify({
+                    nickname: nickname,
+                    score: score,
+                    level: currentLevel,
+                    distance: Math.floor(distance),
+                    date: new Date().toISOString()
+                }), true);
+            } catch (e) {}
+            
+            await loadLeaderboard();
+            document.getElementById('gameOver').style.display = 'flex';
+        }
+        
+        async function loadLeaderboard() {
+            try {
+                const result = await window.storage.list('score_', true);
+                if (!result || !result.keys) {
+                    document.getElementById('leaderboardList').innerHTML = '<p style="color: #0ff; padding: 10px;">Henüz skor yok! 🌟</p>';
+                    return;
+                }
+                
+                const scores = [];
+                for (const key of result.keys) {
+                    try {
+                        const data = await window.storage.get(key, true);
+                        if (data && data.value) {
+                            scores.push(JSON.parse(data.value));
+                        }
+                    } catch (e) {}
+                }
+                
+                scores.sort((a, b) => b.score - a.score);
+                const top10 = scores.slice(0, 10);
+                
+                const list = document.getElementById('leaderboardList');
+                list.innerHTML = top10.map((s, i) => {
+                    const isUser = s.nickname === nickname;
+                    const medal = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `${i + 1}.`;
+                    
+                    let style = '';
+                    if (isUser) {
+                        style = 'background: linear-gradient(135deg, #0ff, #f0f); color: #000; font-weight: bold;';
+                    } else if (i === 0) {
+                        style = 'background: rgba(255,215,0,0.2); border: 1px solid #ffd700;';
+                    } else if (i === 1) {
+                        style = 'background: rgba(192,192,192,0.2); border: 1px solid #c0c0c0;';
+                    } else if (i === 2) {
+                        style = 'background: rgba(205,127,50,0.2); border: 1px solid #cd7f32;';
+                    }
+                    
+                    return `<div class="leaderboard-item" style="${style}">
+                        <span>${medal} ${s.nickname} (L${s.level || 1})</span>
+                        <span>${s.score} PNT</span>
+                    </div>`;
+                }).join('');
+                
+            } catch (e) {}
+        }
+        
+        function startGame() {
+            const input = document.getElementById('nicknameInput').value.trim();
+            if (!input) {
+                alert('RUMUZ GİR!');
+                return;
+            }
+            
+            nickname = input;
+            document.getElementById('menu').style.display = 'none';
+            gameState = 'playing';
+            score = 0;
+            distance = 0;
+            speed = 0.15;
+            currentLane = 0;
+            isJumping = false;
+            lastQuizDistance = 0;
+            obstacleSpawnRate = 40;
+            lives = 3;
+            currentLevel = 1;
+            levelQuestionIndex = 0;
+            recentObstacleLanes = [];
+            currentLevelQuestions = getLevelQuestions(1);
+            usedJoker = false;
+            updateLives();
+            updateScore();
+            
+            loadWrongAnswers();
+            
+            obstacles.forEach(obs => scene.remove(obs));
+            obstacles = [];
+            
+            player.position.set(0, 0, 2);
+            document.getElementById('level').textContent = 'LEVEL 1';
+            
+            if (!audioContext) initAudio();
+        }
+        
+        function restartGame() {
+            document.getElementById('gameOver').style.display = 'none';
+            startGame();
+        }
+        
+        function toggleAudio() {
+            audioEnabled = !audioEnabled;
+            document.getElementById('audioToggle').textContent = audioEnabled ? '🔊' : '🔇';
+            if (audioEnabled && !audioContext) initAudio();
+        }
+        
+        function animate() {
+            requestAnimationFrame(animate);
+            update();
+            renderer.render(scene, camera);
+        }
+        
+        document.getElementById('startBtn').addEventListener('click', startGame);
+        document.getElementById('restartBtn').addEventListener('click', restartGame);
+        document.getElementById('nextLevelBtn').addEventListener('click', nextLevel);
+        document.getElementById('trueBtn').addEventListener('click', () => answerQuiz(true));
+        document.getElementById('falseBtn').addEventListener('click', () => answerQuiz(false));
+        document.getElementById('jokerTrueBtn').addEventListener('click', () => answerJokerQuestion(true));
+        document.getElementById('jokerFalseBtn').addEventListener('click', () => answerJokerQuestion(false));
+        document.getElementById('continueBtn').addEventListener('click', continueGame);
+        document.getElementById('audioToggle').addEventListener('click', toggleAudio);
+        
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowLeft') moveLane(-1);
+            if (e.key === 'ArrowRight') moveLane(1);
+            if (e.key === ' ') { e.preventDefault(); jump(); }
+        });
+        
+        document.addEventListener('touchstart', (e) => {
+            touchStartX = e.touches[0].clientX;
+            touchStartY = e.touches[0].clientY;
+        });
+        
+        document.addEventListener('touchend', (e) => {
+            const touchEndX = e.changedTouches[0].clientX;
+            const touchEndY = e.changedTouches[0].clientY;
+            const deltaX = touchEndX - touchStartX;
+            const deltaY = touchEndY - touchStartY;
+            
+            if (Math.abs(deltaX) > Math.abs(deltaY)) {
+                if (deltaX > 50) moveLane(1);
+                else if (deltaX < -50) moveLane(-1);
+            } else {
+                if (deltaY < -50) jump();
+            }
+        });
+        
+        document.getElementById('nicknameInput').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') startGame();
+        });
+        
+        initThree();
+        animate();
+    </script>
+</body>
+</html>
