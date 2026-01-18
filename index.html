@@ -1132,10 +1132,41 @@
         }
         
         async function endGame() {
-            gameState = 'gameover';
-            
-            let completionMessage = '';
-            if (currentLevel === 4) {
+    gameState = 'gameover';
+    
+    // 1. Oyuncudan ismini alalım
+    let oyuncuAdi = prompt("Oyun Bitti! Skorun: " + score + "\nLütfen adını yaz:");
+    
+    // Eğer isim yazıldıysa Replit'e gönder
+    if (oyuncuAdi) {
+        puanıReplit_eGonder(oyuncuAdi, score);
+    }
+
+    let completionMessage = '';
+    if (currentLevel === 4) {
+        // ... senin mevcut kodların buradan devam eder ...
+    }
+}
+
+// BU FONKSİYONU DA DOSYANIN EN ALTINA (script içine) EKLE:
+function puanıReplit_eGonder(isim, puan) {
+    const REPLIT_URL = "https://REPLIT_PROJE_ADIN.username.repl.co/skor-kaydet"; // BURAYI DEĞİŞTİR
+
+    fetch(REPLIT_URL, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        mode: 'cors',
+        body: JSON.stringify({
+            username: isim,
+            score: puan
+        })
+    })
+    .then(response => response.json())
+    .then(data => console.log('Başarılı:', data))
+    .catch(error => console.error('Hata:', error));
+ {
                 completionMessage = '🏆 TEBRİKLER! TÜM SEVİYELERİ TAMAMLADINIZ!\nEmzirme konusunda UZMAN oldunuz! 🍼\n\n';
             }
             
@@ -1295,7 +1326,28 @@
         });
         
         initThree();
-        animate();
+        animate(); function puanGonder(name, score) {
+    const REPLIT_API = "https://6e6e85d0-effa-48c1-b493-3b45d1771e98-00-2r0pi9r208bxz.picard.replit.dev/skor-kaydet";
+
+    fetch(REPLIT_API, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        mode: 'cors',
+        body: JSON.stringify({
+            username: name,
+            score: score
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        console.log('Skor başarıyla iletildi:', data);
+    })
+    .catch((error) => {
+        console.error('Skor gönderilirken hata oluştu:', error);
+    });
+}
     </script>
 </body>
 </html>
